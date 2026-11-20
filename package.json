@@ -1,0 +1,87 @@
+{
+  "name": "code-humanizer",
+  "displayName": "Code Humanizer",
+  "description": "Make AI-generated code look more natural, varied, and human-written with live preview and style controls.",
+  "version": "0.1.0",
+  "publisher": "nidalbenyakhelf",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nidalbenyakhelf/code-humanizer.git"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "humanize",
+    "refactor",
+    "code-style",
+    "preview"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeHumanizer.humanizeSelection",
+        "title": "Code Humanizer: Humanize Selection"
+      },
+      {
+        "command": "codeHumanizer.openLivePreview",
+        "title": "Code Humanizer: Open Live Preview"
+      }
+    ],
+    "configuration": {
+      "title": "Code Humanizer",
+      "properties": {
+        "codeHumanizer.intensity": {
+          "type": "string",
+          "enum": ["subtle", "balanced", "heavy"],
+          "enumDescriptions": [
+            "Light touch: remove stereotypical AI comments and extra blank lines.",
+            "Balanced: clean AI phrasing, normalize spacing, and apply moderate style shifts.",
+            "Heavy: stronger stylistic shifts and persona adjustments while keeping logic intact."
+          ],
+          "default": "balanced",
+          "description": "Controls how strongly the code is humanized."
+        },
+        "codeHumanizer.style": {
+          "type": "string",
+          "enum": ["clean-standard", "pragmatic", "beginner"],
+          "enumDescriptions": [
+            "Clean and natural code without robotic AI commentary.",
+            "Fast, direct, and minimal code written for quick execution.",
+            "Beginner-like code with simple structure and short variable names where safe."
+          ],
+          "default": "clean-standard",
+          "description": "Selects the target author style."
+        },
+        "codeHumanizer.removeAiComments": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remove verbose or stereotypical AI-style comments."
+        },
+        "codeHumanizer.shortVariablesInBeginnerMode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use short or single-letter local variable names when style is set to beginner."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "package": "npm run compile && npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.4.0"
+  }
+}
