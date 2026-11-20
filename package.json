@@ -32,6 +32,18 @@
         "title": "Code Humanizer: Humanize Selection"
       },
       {
+        "command": "codeHumanizer.applyStoneAgeSelection",
+        "title": "Code Humanizer: Apply Stone Age to Selection"
+      },
+      {
+        "command": "codeHumanizer.switchStyle",
+        "title": "Code Humanizer: Switch Author Style"
+      },
+      {
+        "command": "codeHumanizer.switchIntensity",
+        "title": "Code Humanizer: Switch Intensity"
+      },
+      {
         "command": "codeHumanizer.openLivePreview",
         "title": "Code Humanizer: Open Live Preview"
       }
@@ -92,6 +104,24 @@
           "description": "Simplify verbose output expressions where safe."
         }
       }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codeHumanizer.humanizeSelection",
+          "when": "editorHasSelection",
+          "group": "codeHumanizer@1"
+        },
+        {
+          "command": "codeHumanizer.applyStoneAgeSelection",
+          "when": "editorHasSelection",
+          "group": "codeHumanizer@2"
+        },
+        {
+          "command": "codeHumanizer.switchStyle",
+          "group": "codeHumanizer@3"
+        }
+      ]
     }
   },
   "scripts": {

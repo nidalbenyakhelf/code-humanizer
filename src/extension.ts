@@ -14,6 +14,25 @@ function getCurrentOptions(): HumanizeOptions {
   };
 }
 
+async function applyToSelection(editor: vscode.TextEditor, override?: Partial<HumanizeOptions>): Promise<void> {
+  const selection = editor.selection;
+  if (selection.isEmpty) {
+    vscode.window.showInformationMessage('Select a block of code first, or open Live Preview.');
+    return;
+  }
+
+  const originalText = editor.document.getText(selection);
+  const options: HumanizeOptions = {
+    ...getCurrentOptions(),
+    ...override
+  };
+  const humanizedText = humanizeCode(originalText, options);
+
+  await editor.edit((editBuilder) => {
+    editBuilder.replace(selection, humanizedText);
+  });
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   const humanizeSelectionCmd = vscode.commands.registerCommand(
     'codeHumanizer.humanizeSelection',
@@ -23,19 +42,67 @@ export function activate(context: vscode.ExtensionContext): void {
         vscode.window.showWarningMessage('Open a file and select code to humanize.');
         return;
       }
+      await applyToSelection(editor);
+    }
+  );
 
-      const selection = editor.selection;
-      if (selection.isEmpty) {
-        vscode.window.showInformationMessage('Select a block of code first, or open Live Preview.');
+  const quickStoneAgeCmd = vscode.commands.registerCommand(
+    'codeHumanizer.applyStoneAgeSelection',
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showWarningMessage('Open a file and select code to humanize.');
         return;
       }
-
-      const originalText = editor.document.getText(selection);
-      const humanizedText = humanizeCode(originalText, getCurrentOptions());
-
-      await editor.edit((editBuilder) => {
-        editBuilder.replace(selection, humanizedText);
+      await applyToSelection(editor, {
+        style: 'stone-age',
+        intensity: 'heavy',
+        removeAiComments: true,
+        shortVariablesInBeginnerMode: true
       });
+    }
+  );
+
+  const switchStyleCmd = vscode.commands.registerCommand(
+    'codeHumanizer.switchStyle',
+    async () => {
+      const picked = await vscode.window.showQuickPick(
+        [
+          { label: 'clean-standard', description: 'Clean and natural code' },
+          { label: 'pragmatic', description: 'Fast and direct code' },
+          { label: 'beginner', description: 'Beginner style with short variables' },
+          { label: 'stone-age', description: 'Raw primitive stone-age style' }
+        ],
+        { placeHolder: 'Choose Code Humanizer author style' }
+      );
+      if (!picked) {
+        return;
+      }
+      await vscode.workspace
+        .getConfiguration('codeHumanizer')
+        .update('style', picked.label, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(`Code Humanizer style set to: ${picked.label}`);
+    }
+  );
+
+  const switchIntensityCmd = vscode.commands.registerCommand(
+    'codeHumanizer.switchIntensity',
+    async () => {
+      const picked = await vscode.window.showQuickPick(
+        [
+          { label: 'subtle', description: 'Light touch' },
+          { label: 'balanced', description: 'Balanced humanization' },
+          { label: 'heavy', description: 'Strong stylistic shifts' }
+        ],
+        { placeHolder: 'Choose Code Humanizer intensity' }
+      );
+      if (!picked) {
+        return;
+      }
+      await vscode.workspace
+        .getConfiguration('codeHumanizer')
+        .update('intensity', picked.label, vscode.ConfigurationTarget.Global);
+      vscode.window.showInformationMessage(`Code Humanizer intensity set to: ${picked.label}`);
     }
   );
 
@@ -50,7 +117,13 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   );
 
-  context.subscriptions.push(humanizeSelectionCmd, openPreviewCmd);
+  context.subscriptions.push(
+    humanizeSelectionCmd,
+    quickStoneAgeCmd,
+    switchStyleCmd,
+    switchIntensityCmd,
+    openPreviewCmd
+  );
 }
 
 export function deactivate(): void {}
