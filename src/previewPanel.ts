@@ -59,7 +59,9 @@ export class PreviewPanel {
             intensity: message.intensity as HumanizeIntensity,
             style: message.style as AuthorStyle,
             removeAiComments: Boolean(message.removeAiComments),
-            shortVariablesInBeginnerMode: Boolean(message.shortVariablesInBeginnerMode)
+            stripAllComments: Boolean(message.stripAllComments),
+            shortVariablesInBeginnerMode: Boolean(message.shortVariablesInBeginnerMode),
+            simplifyOutput: Boolean(message.simplifyOutput)
           });
           this.panel.webview.postMessage({ type: 'result', code: humanized });
         } else if (message.type === 'applyToEditor') {
@@ -219,6 +221,7 @@ export class PreviewPanel {
         <option value="clean-standard" selected>Clean Standard</option>
         <option value="pragmatic">Pragmatic / Fast</option>
         <option value="beginner">Beginner (Short vars)</option>
+        <option value="stone-age">Stone Age (Raw primitive)</option>
       </select>
     </label>
 
@@ -228,8 +231,18 @@ export class PreviewPanel {
     </label>
 
     <label class="checkbox-label">
+      <input type="checkbox" id="stripAllComments" />
+      Strip all comments (Stone Age)
+    </label>
+
+    <label class="checkbox-label">
       <input type="checkbox" id="shortVars" checked />
       Short vars in beginner mode
+    </label>
+
+    <label class="checkbox-label">
+      <input type="checkbox" id="simplifyOutput" checked />
+      Simplify output
     </label>
   </div>
 
@@ -254,7 +267,9 @@ export class PreviewPanel {
     const intensityEl = document.getElementById('intensity');
     const styleEl = document.getElementById('style');
     const removeCommentsEl = document.getElementById('removeAiComments');
+    const stripAllCommentsEl = document.getElementById('stripAllComments');
     const shortVarsEl = document.getElementById('shortVars');
+    const simplifyOutputEl = document.getElementById('simplifyOutput');
     const sourceEl = document.getElementById('source');
     const outputEl = document.getElementById('output');
 
@@ -265,11 +280,13 @@ export class PreviewPanel {
         intensity: intensityEl.value,
         style: styleEl.value,
         removeAiComments: removeCommentsEl.checked,
-        shortVariablesInBeginnerMode: shortVarsEl.checked
+        stripAllComments: stripAllCommentsEl.checked,
+        shortVariablesInBeginnerMode: shortVarsEl.checked,
+        simplifyOutput: simplifyOutputEl.checked
       });
     }
 
-    [intensityEl, styleEl, removeCommentsEl, shortVarsEl, sourceEl].forEach((el) => {
+    [intensityEl, styleEl, removeCommentsEl, stripAllCommentsEl, shortVarsEl, simplifyOutputEl, sourceEl].forEach((el) => {
       el.addEventListener('input', triggerRender);
       el.addEventListener('change', triggerRender);
     });

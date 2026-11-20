@@ -8,7 +8,9 @@ function getCurrentOptions(): HumanizeOptions {
     intensity: config.get<HumanizeIntensity>('intensity', 'balanced'),
     style: config.get<AuthorStyle>('style', 'clean-standard'),
     removeAiComments: config.get<boolean>('removeAiComments', true),
-    shortVariablesInBeginnerMode: config.get<boolean>('shortVariablesInBeginnerMode', true)
+    stripAllComments: config.get<boolean>('stripAllComments', false),
+    shortVariablesInBeginnerMode: config.get<boolean>('shortVariablesInBeginnerMode', true),
+    simplifyOutput: config.get<boolean>('simplifyOutput', true)
   };
 }
 

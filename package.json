@@ -2,7 +2,7 @@
   "name": "code-humanizer",
   "displayName": "Code Humanizer",
   "description": "Make AI-generated code look more natural, varied, and human-written with live preview and style controls.",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "publisher": "nidalbenyakhelf",
   "license": "MIT",
   "repository": {
@@ -41,7 +41,11 @@
       "properties": {
         "codeHumanizer.intensity": {
           "type": "string",
-          "enum": ["subtle", "balanced", "heavy"],
+          "enum": [
+            "subtle",
+            "balanced",
+            "heavy"
+          ],
           "enumDescriptions": [
             "Light touch: remove stereotypical AI comments and extra blank lines.",
             "Balanced: clean AI phrasing, normalize spacing, and apply moderate style shifts.",
@@ -52,11 +56,17 @@
         },
         "codeHumanizer.style": {
           "type": "string",
-          "enum": ["clean-standard", "pragmatic", "beginner"],
+          "enum": [
+            "clean-standard",
+            "pragmatic",
+            "beginner",
+            "stone-age"
+          ],
           "enumDescriptions": [
             "Clean and natural code without robotic AI commentary.",
             "Fast, direct, and minimal code written for quick execution.",
-            "Beginner-like code with simple structure and short variable names where safe."
+            "Beginner-like code with simple structure and short variable names where safe.",
+            "Stone-age raw code: strips noise, uses primitive short variables, and avoids modern polish."
           ],
           "default": "clean-standard",
           "description": "Selects the target author style."
@@ -70,6 +80,16 @@
           "type": "boolean",
           "default": true,
           "description": "Use short or single-letter local variable names when style is set to beginner."
+        },
+        "codeHumanizer.stripAllComments": {
+          "type": "boolean",
+          "default": false,
+          "description": "Remove all comments when using stone-age style."
+        },
+        "codeHumanizer.simplifyOutput": {
+          "type": "boolean",
+          "default": true,
+          "description": "Simplify verbose output expressions where safe."
         }
       }
     }

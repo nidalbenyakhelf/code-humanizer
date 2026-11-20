@@ -1,35 +1,26 @@
-export type HumanizeIntensity = 'subtle' | 'balanced' | 'heavy';
-export type AuthorStyle = 'clean-standard' | 'pragmatic' | 'beginner';
+import {
+  AuthorStyle,
+  getLanguageProfile,
+  HumanizeIntensity,
+  HumanizeOptions,
+  LanguageProfile,
+  resolveLanguage
+} from './languages';
 
-export interface HumanizeOptions {
-  intensity: HumanizeIntensity;
-  style: AuthorStyle;
-  removeAiComments: boolean;
-  shortVariablesInBeginnerMode: boolean;
-}
-
-const RESERVED_WORDS = new Set([
-  'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'default', 'break',
-  'continue', 'return', 'function', 'const', 'let', 'var', 'class', 'new',
-  'try', 'catch', 'finally', 'throw', 'async', 'await', 'import', 'export',
-  'from', 'def', 'elif', 'True', 'False', 'None', 'true', 'false', 'null',
-  'undefined', 'int', 'float', 'double', 'char', 'bool', 'void', 'struct',
-  'public', 'private', 'protected', 'static', 'console', 'log', 'print',
-  'Math', 'Object', 'Array', 'String', 'Number', 'Boolean', 'Promise', 'Error'
-]);
+export { AuthorStyle, HumanizeIntensity, HumanizeOptions };
 
 const AI_COMMENT_PATTERNS = [
-  /^\s*(\/\/|#)\s*(here is|this function|this code|the following|helper function|initialize|check if|return the|loop through|step \d+|note:)/i,
+  /^\s*(\/\/|#|\/\*|\*|<!--)\s*(helper function|this function|this code|the following|check if|return zero|return the|initialize|iterate through|loop through|calculate|invoke|output|indicate|step \d+|note:|todo:|placeholder|example)/i,
   /^\s*\/\*\*?\s*(this|helper|function|method|returns|creates|handles)\b/i
 ];
 
-const SHORT_NAMES = ['x', 'y', 'z', 'n', 'm', 'k', 'val', 'tmp', 'res', 'out'];
+const SHORT_NAMES = ['a', 'b', 'c', 'x', 'y', 'z', 'n', 'm', 'res', 'tmp'];
 
 function isAiLikeComment(line: string): boolean {
-  return AI_COMMENT_PATTERNS.some((pattern) => pattern.test(line));
+  return AI_COMMENT_PATTERNS.some((p) => p.test(line));
 }
 
-function collapseExcessBlankLines(text: string, maxBlankLines: number): string {
+function collapseExcessBlankLines(text: string): string {
   const lines = text.split(/\r?\n/);
   const result: string[] = [];
   let blankCount = 0;
@@ -37,7 +28,7 @@ function collapseExcessBlankLines(text: string, maxBlankLines: number): string {
   for (const line of lines) {
     if (line.trim() === '') {
       blankCount++;
-      if (blankCount <= maxBlankLines) {
+      if (blankCount <= 1) {
         result.push('');
       }
     } else {
@@ -49,21 +40,12 @@ function collapseExcessBlankLines(text: string, maxBlankLines: number): string {
   return result.join('\n').trim();
 }
 
-function renameBeginnerVariables(code: string): string {
-  const declMatches = [...code.matchAll(/\b(?:let|const|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\b/g)];
-  const candidates: string[] = [];
-
-  for (const match of declMatches) {
-    const name = match[1];
-    if (!RESERVED_WORDS.has(name) && name.length > 2 && !candidates.includes(name)) {
-      candidates.push(name);
-    }
-  }
-
+function renameVariables(code: string, profile: LanguageProfile, limit: number): string {
+  const candidates = profile.extractVariables(code);
   let updated = code;
   let idx = 0;
 
-  for (const original of candidates.slice(0, 6)) {
+  for (const original of candidates.slice(0, limit)) {
     const replacement = SHORT_NAMES[idx] ?? `v${idx}`;
     idx++;
     const escaped = original.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -75,52 +57,36 @@ function renameBeginnerVariables(code: string): string {
 }
 
 export function humanizeCode(input: string, options: HumanizeOptions): string {
-  let output = input;
-
-  const lines = output.split(/\r?\n/);
+  const lang = resolveLanguage(input, options.language);
+  const profile = getLanguageProfile(lang);
+  const lines = input.split(/\r?\n/);
   const filteredLines: string[] = [];
 
   for (const line of lines) {
-    const trimmed = line.trim();
-    const isComment = trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*');
-
-    if (isComment && options.removeAiComments && isAiLikeComment(line)) {
-      if (options.style === 'beginner' || options.intensity === 'heavy') {
+    if (profile.isCommentLine(line)) {
+      if (options.stripAllComments && options.style === 'stone-age') {
         continue;
       }
-      if (options.intensity === 'subtle') {
+      if (options.removeAiComments && isAiLikeComment(line)) {
         continue;
       }
     }
-
-    if (options.style === 'pragmatic' && trimmed.startsWith('//')) {
-      const lower = trimmed.toLowerCase();
-      if (lower.includes('todo') || lower.includes('placeholder') || lower.includes('example')) {
-        continue;
-      }
-    }
-
     filteredLines.push(line);
   }
 
-  output = filteredLines.join('\n');
+  let output = filteredLines.join('\n');
 
-  if (options.intensity === 'balanced' || options.intensity === 'heavy') {
-    output = output.replace(/;\s*$/gm, (match, offset, full) => {
-      const before = full.slice(Math.max(0, offset - 30), offset);
-      if (before.includes('for (')) {
-        return match;
-      }
-      return options.style === 'beginner' && options.intensity === 'heavy' ? '' : ';';
-    });
+  const shouldShortenVars =
+    (options.style === 'beginner' && options.shortVariablesInBeginnerMode) ||
+    options.style === 'stone-age';
+
+  if (shouldShortenVars) {
+    const limit = options.style === 'stone-age' ? 12 : 8;
+    output = renameVariables(output, profile, limit);
   }
 
-  if (options.style === 'beginner' && options.shortVariablesInBeginnerMode) {
-    output = renameBeginnerVariables(output);
-  }
-
-  const maxBlanks = options.intensity === 'heavy' ? 1 : 1;
-  output = collapseExcessBlankLines(output, maxBlanks);
+  output = profile.applyStyleTweaks(output, options);
+  output = collapseExcessBlankLines(output);
 
   return output;
 }
